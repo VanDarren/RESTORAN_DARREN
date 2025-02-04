@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Routing\Controller as BaseController;
 
 class Controller extends BaseController
@@ -535,12 +536,14 @@ public function prosesTransaksi(Request $request)
 {
     $model = new resto();  
 
+    // Generate kode transaksi di backend
+    $kodeTransaksi = 'TR-' . time(); // Contoh: TR-1707053456
+
     // Mengambil data dari request
     $tanggal = $request->input('tanggal');
-    $kodeTransaksi = $request->input('kode_transaksi');
     $kodeMember = $request->input('kode_member');
     $kodeVoucher = $request->input('kode_voucher');
-    $menu = $request->input('menu');  // Daftar menu yang dipesan
+    $menu = json_encode($request->input('menu'));  // Simpan menu dalam format JSON
     $subtotal = $request->input('subtotal');
     $discount = $request->input('discount');
     $totalAkhir = $request->input('total_akhir');
@@ -561,12 +564,16 @@ public function prosesTransaksi(Request $request)
         'kembalian' => $kembalian,
     ];
 
-    // Menyimpan data transaksi ke dalam tabel 'transaksi'
+    // Simpan data transaksi ke database
     $model->tambah('transaksi', $data);
 
-    // Mengarahkan ke halaman transaksi dengan pesan sukses
-    return redirect('kasir')->with('success', 'Transaksi berhasil diproses');
+    // Kembalikan response JSON agar frontend bisa memproses lebih lanjut
+    return response()->json([
+        'success' => true,
+        'kode_transaksi' => $kodeTransaksi
+    ]);
 }
+
 
 public function transaksi()
 {
@@ -583,6 +590,24 @@ public function transaksi()
     echo view('menu', $data);
     echo view('transaksi', $data);
     echo view('footer');
+}
+
+public function cetakNota($kode_transaksi)
+{
+    // Ambil data transaksi dari tabel 'transaksi' berdasarkan kode_transaksi
+    $transaksi = resto::where('kode_transaksi', $kode_transaksi)->first();
+
+    if (!$transaksi) {
+        abort(404, "Transaksi tidak ditemukan.");
+    }
+
+    // Decode menu jika disimpan dalam format JSON
+    $menuList = json_decode($transaksi->menu, true);
+
+    // Generate PDF
+    $pdf = Pdf::loadView('nota', compact('transaksi', 'menuList'));
+
+    return $pdf->stream('Nota_Transaksi_' . $kode_transaksi . '.pdf');
 }
 
 

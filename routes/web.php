@@ -28,6 +28,7 @@ Route::get('/member', [Controller::class, 'member'])->name('member');
 Route::get('/voucher', [Controller::class, 'voucher'])->name('voucher');
 Route::get('/kasir', [Controller::class, 'kasir'])->name('kasir');
 Route::get('/transaksi', [Controller::class, 'transaksi'])->name('transaksi');
+Route::get('/nota/{kode_transaksi}', [Controller::class, 'generateNota'])->name('generateNota');
 
 // aksi
 Route::post('/aksi_login', [Controller::class, 'aksi_login'])->name('aksi_login');
@@ -45,3 +46,4 @@ Route::post('/tambahvoucher', [Controller::class, 'tambahvoucher'])->name('tamba
 Route::post('/editvoucher', [Controller::class, 'editvoucher'])->name('editvoucher');
 Route::post('/hapusvoucher/{id}', [Controller::class, 'hapusvoucher'])->name('hapusvoucher');
 Route::post('/prosesTransaksi', [Controller::class, 'prosesTransaksi'])->name('prosesTransaksi');
+Route::get('/cetakNota/{kode_transaksi}', [Controller::class, 'cetakNota'])->name('cetakNota');

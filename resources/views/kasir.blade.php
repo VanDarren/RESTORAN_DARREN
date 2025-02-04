@@ -249,41 +249,55 @@
     });
   });
 
-  // Perbarui form transaksi sebelum disubmit
   $('#formTransaksi').submit(function(event) {
+    event.preventDefault(); // Hindari form submit default
+
     let bayar = parseFloat($('#bayar').val()) || 0;
     let totalAkhir = parseFloat($('#total').text().replace(/[^\d.-]/g, '')) || 0;
 
-    // Cek apakah uang bayar cukup
     if (bayar < totalAkhir) {
-      alert("Jumlah bayar kurang dari total!");
-      event.preventDefault();  // Menghentikan submit form jika kurang bayar
-      return;
+        alert("Jumlah bayar kurang dari total!");
+        return;
     }
 
     let kembalian = bayar - totalAkhir;
-    $('#kembalian').text(kembalian.toLocaleString());   // Update kembalian (tidak pakai input)
+    $('#kembalian').text(kembalian.toLocaleString());
 
-    // Ambil data transaksi dan masukkan ke form
-    let tanggal = new Date().toISOString().split('T')[0];  // Tanggal hari ini
-    let kodeTransaksi = 'TR-' + Math.random().toString().slice(2, 10);  // Generate kode transaksi acak
-    let kodeMember = $('#membershipCode').val();
-    let kodeVoucher = $('#voucherCode').val();
-    let menu = cart.map(item => item.name).join(', ');  // Nama menu yang dipesan
-    let subtotal = parseFloat($('#subtotal').text().replace(/[^\d.-]/g, '')) || 0;
-    let discount = parseFloat($('#discount').text().replace(/[^\d.-]/g, '')) || 0;
-    let total = parseFloat($('#total').text().replace(/[^\d.-]/g, '')) || 0;
+    let formData = {
+        tanggal: new Date().toISOString().split('T')[0],
+        kode_member: $('#membershipCode').val(),
+        kode_voucher: $('#voucherCode').val(),
+        subtotal: parseFloat($('#subtotal').text().replace(/[^\d.-]/g, '')) || 0,
+        discount: parseFloat($('#discount').text().replace(/[^\d.-]/g, '')) || 0,
+        total_akhir: totalAkhir,
+        bayar: bayar,
+        kembalian: kembalian,
+        _token: "{{ csrf_token() }}" // CSRF token untuk keamanan
+    };
 
-    // Set value hidden field pada form
-    $('#tanggal').val(tanggal);
-    $('#kodeTransaksi').val(kodeTransaksi);
-    $('#kodeMember').val(kodeMember);
-    $('#kodeVoucher').val(kodeVoucher);
-    $('#menu').val(menu);
-    $('#subtotalField').val(subtotal);
-    $('#discountField').val(discount);
-    $('#totalField').val(total);
-    $('#bayarField').val(bayar);
-    $('#kembalianField').val(kembalian);
-  });
+    $.ajax({
+        url: "{{ url('/prosesTransaksi') }}", // Pastikan route benar
+        type: "POST",
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                let kodeTransaksi = response.kode_transaksi; // Ambil kode transaksi dari response
+                alert("Transaksi berhasil!");
+
+                // Cetak nota otomatis
+                window.open("{{ url('/cetakNota') }}/" + kodeTransaksi, "_blank");
+
+                // Refresh halaman setelah transaksi selesai
+                location.reload();
+            } else {
+                alert("Terjadi kesalahan saat menyimpan transaksi.");
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error(xhr.responseText);
+            alert("Gagal memproses transaksi.");
+        }
+    });
+});
+
 </script>
