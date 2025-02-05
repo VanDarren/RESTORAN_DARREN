@@ -534,32 +534,43 @@ public function editsetting(Request $request)
 
 public function prosesTransaksi(Request $request)
 {
-    $model = new resto(); 
+    $model = new Resto(); 
     $kodeTransaksi = 'TR-' . time(); 
 
+    // Ambil data dari request
     $tanggal = $request->input('tanggal');
     $kodeMember = $request->input('kode_member');
     $kodeVoucher = $request->input('kode_voucher');
-    $menu = $request->input('menu');
+    $menuJson = $request->input('menu'); 
     $subtotal = $request->input('subtotal');
     $discount = $request->input('discount');
     $totalAkhir = $request->input('total_akhir');
     $bayar = $request->input('bayar');
     $kembalian = $request->input('kembalian');
 
-    $qtyString = $request->input('qty');
-    $qtyArray = explode(',', $qtyString); 
+    // Decode JSON menu menjadi array
+    $menuArray = json_decode($menuJson, true); 
 
-    // Menyusun qty berdasarkan menu
-    $qty = implode(',', $qtyArray);
+    // Pastikan `menuArray` tidak null atau kosong
+    if (!$menuArray || empty($menuArray)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Menu tidak boleh kosong!'
+        ]);
+    }
 
+    // Ambil hanya `nama_menu` dan `qty`, lalu gabungkan dengan koma
+    $menuNames = implode(',', array_column($menuArray, 'name')); 
+    $menuQty = implode(',', array_column($menuArray, 'qty'));
+
+    // Buat data untuk disimpan
     $data = [
         'tanggal' => $tanggal,
         'kode_transaksi' => $kodeTransaksi,
         'kode_member' => $kodeMember,
         'kode_voucher' => $kodeVoucher,
-        'menu' => $menu, 
-        'qty' => $qty, 
+        'menu' => $menuNames, // Simpan nama menu dengan koma
+        'qty' => $menuQty, // Simpan jumlah qty dengan koma
         'total' => $subtotal,
         'discount' => $discount,
         'total_akhir' => $totalAkhir,
@@ -567,6 +578,7 @@ public function prosesTransaksi(Request $request)
         'kembalian' => $kembalian,
     ];
 
+    // Simpan ke database
     $model->tambah('transaksi', $data);
 
     return response()->json([
@@ -574,7 +586,6 @@ public function prosesTransaksi(Request $request)
         'kode_transaksi' => $kodeTransaksi
     ]);
 }
-
 
 
 public function transaksi()
@@ -594,7 +605,8 @@ public function transaksi()
     echo view('footer');
 }
 
-public function cetakNota($kode_transaksi)
+
+public function generateNota($kode_transaksi)
 {
     $model = new resto();
     $transaksi = $model->getWhere('transaksi', ['kode_transaksi' => $kode_transaksi]);
@@ -602,17 +614,15 @@ public function cetakNota($kode_transaksi)
     if (!$transaksi) {
         abort(404, "Transaksi tidak ditemukan.");
     }
-
-    // Decode 'menu' if stored as JSON
-    $transaksi->menu = json_decode($transaksi->menu);
-
-    // Check if menu is null or empty
-    if (!$transaksi->menu) {
-        $transaksi->menu = [];
-    }
-
-    // Pass 'transaksi' to the view
+    
+    // Pastikan menu dan qty sudah dalam bentuk array
+    $transaksi->menu = json_decode($transaksi->menu, true); 
+    $transaksi->qty = json_decode($transaksi->qty, true);
+    
+    // Tidak perlu mengambil harga karena tidak ada di database
     return view('nota', compact('transaksi'));
+    
+    
 }
 
 

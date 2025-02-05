@@ -85,21 +85,22 @@
 
         <!-- Form Transaksi -->
         <form id="formTransaksi" action="{{ route('prosesTransaksi') }}" method="POST">
-          @csrf
-          <input type="hidden" name="tanggal" id="tanggal">
-          <input type="hidden" name="kode_transaksi" id="kodeTransaksi">
-          <input type="hidden" name="kode_member" id="kodeMember">
-          <input type="hidden" name="kode_voucher" id="kodeVoucher">
-          <input type="hidden" name="menu" id="menu">
-          <input type="hidden" name="qty" id="qtyField">  <!-- Input untuk qty -->
-          <input type="hidden" name="subtotal" id="subtotalField">
-          <input type="hidden" name="discount" id="discountField">
-          <input type="hidden" name="total_akhir" id="totalField">
-          <input type="hidden" name="bayar" id="bayarField">
-          <input type="hidden" name="kembalian" id="kembalianField">
+  @csrf
+  <input type="hidden" name="tanggal" id="tanggal">
+  <input type="hidden" name="kode_transaksi" id="kodeTransaksi">
+  <input type="hidden" name="kode_member" id="kodeMember">
+  <input type="hidden" name="kode_voucher" id="kodeVoucher">
+  <input type="hidden" name="menu" id="menu">
+  <input type="hidden" name="qty" id="qtyField">
+  <input type="hidden" name="subtotal" id="subtotalField">
+  <input type="hidden" name="discount" id="discountField">
+  <input type="hidden" name="total_akhir" id="totalField">
+  <input type="hidden" name="bayar" id="bayarField">
+  <input type="hidden" name="kembalian" id="kembalianField">
 
-          <button type="submit" class="btn btn-success btn-block">Proses Pembayaran</button>
-        </form>
+  <button type="submit" class="btn btn-success btn-block">Proses Pembayaran</button>
+</form>
+
       </div>
     </div>
   </div>
@@ -182,6 +183,7 @@
     $('#subtotalField').val(subtotal);  // Set subtotal ke hidden input
 }
 
+
   // Hapus item dari daftar pesanan
   $(document).on('click', '.remove-item', function() {
     let index = $(this).data('index');
@@ -261,7 +263,7 @@
   });
 
   $('#formTransaksi').submit(function(event) {
-    event.preventDefault(); // Hindari form submit default
+    event.preventDefault(); 
 
     let bayar = parseFloat($('#bayar').val()) || 0;
     let totalAkhir = parseFloat($('#total').text().replace(/[^\d.-]/g, '')) || 0;
@@ -278,34 +280,36 @@
         tanggal: new Date().toISOString().split('T')[0],
         kode_member: $('#membershipCode').val(),
         kode_voucher: $('#voucherCode').val(),
+        menu: $('#menu').val(), // Pastikan JSON terkirim
         subtotal: parseFloat($('#subtotal').text().replace(/[^\d.-]/g, '')) || 0,
         discount: parseFloat($('#discount').text().replace(/[^\d.-]/g, '')) || 0,
         total_akhir: totalAkhir,
         bayar: bayar,
         kembalian: kembalian,
-        _token: "{{ csrf_token() }}" // CSRF token untuk keamanan
+        _token: "{{ csrf_token() }}"
     };
 
     $.ajax({
-    url: "{{ url('/prosesTransaksi') }}", // Pastikan route benar
-    type: "POST",
-    data: formData,
-    success: function(response) {
-        console.log(response);  // Debug response dari backend
-        if (response.success) {
-            let kodeTransaksi = response.kode_transaksi;
-            alert("Transaksi berhasil!");
-            window.open("{{ url('/cetakNota') }}/" + kodeTransaksi, "_blank");
-            location.reload();
-        } else {
-            alert("Terjadi kesalahan saat menyimpan transaksi.");
+        url: "{{ route('prosesTransaksi') }}",
+        type: "POST",
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                alert("Transaksi berhasil!");
+                // Redirect ke halaman nota setelah transaksi berhasil
+                window.location.href = "{{ url('nota') }}/" + response.kode_transaksi;
+            } else {
+                alert("Terjadi kesalahan: " + response.message);
+            }
+        },
+        error: function(xhr) {
+            console.error(xhr.responseText);
+            alert("Gagal memproses transaksi.");
         }
-    },
-    error: function(xhr, status, error) {
-        console.error(xhr.responseText);
-        alert("Gagal memproses transaksi.");
-    }
+    });
 });
-});
+
+
+
 
 </script>

@@ -1,52 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nota Transaksi</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; }
-        .container { width: 100%; max-width: 400px; margin: auto; text-align: center; }
+        body { font-family: Arial, sans-serif; font-size: 14px; }
+        .container { width: 100%; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; }
+        h2, h3 { text-align: center; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border-bottom: 1px solid #ddd; padding: 5px; text-align: left; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 5px; text-align: left; }
+        .total { text-align: right; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h3>Nota Transaksi</h3>
-        <p>Kode Transaksi: {{ $transaksi->kode_transaksi }}</p>
-        <p>Tanggal: {{ $transaksi->tanggal }}</p>
-        <p>Kode Member: {{ $transaksi->kode_member ?? 'Tidak ada' }}</p>
-        <p>Kode Voucher: {{ $transaksi->kode_voucher ?? 'Tidak ada' }}</p>
 
-        <table>
-            <thead>
+<div class="container">
+    <h2>Nota Transaksi</h2>
+    <h3>Kode: {{ $transaksi->kode_transaksi }}</h3>
+    <p>Tanggal: {{ $transaksi->tanggal }}</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Menu</th>
+                <th>Qty</th>
+                <th>Harga</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+            $menuList = $transaksi->menu; // jika menu sudah array
+$qtyList = $transaksi->qty;   // jika qty sudah array
+
+            @endphp
+            
+            @foreach ($menuList as $index => $menu)
                 <tr>
-                    <th>Menu</th>
-                    <th>Qty</th>
-                    <th>Total</th>
+                    <td>{{ $menu }}</td>
+                    <td>{{ $qtyList[$index] }}</td>
+                    <td>Rp {{ number_format($hargaList[$index], 0, ',', '.') }}</td>
+                    <td>Rp {{ number_format($qtyList[$index] * $hargaList[$index], 0, ',', '.') }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @forelse ($transaksi->menu as $menuItem)
-                    <tr>
-                        <td>{{ $menuItem->nama_menu }}</td>
-                        <td>{{ $menuItem->qty }}</td>
-                        <td>Rp {{ number_format($menuItem->price * $menuItem->qty, 0, ',', '.') }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="3">Tidak ada menu yang dipilih.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+            @endforeach
+        </tbody>
+    </table>
 
-        <p>Subtotal: Rp {{ number_format($transaksi->total, 0, ',', '.') }}</p>
-        <p>Diskon: Rp {{ number_format($transaksi->discount, 0, ',', '.') }}</p>
-        <h4>Total: Rp {{ number_format($transaksi->total_akhir, 0, ',', '.') }}</h4>
-        <p>Bayar: Rp {{ number_format($transaksi->bayar, 0, ',', '.') }}</p>
-        <p>Kembalian: Rp {{ number_format($transaksi->kembalian, 0, ',', '.') }}</p>
+    <p class="total">Subtotal: Rp {{ number_format($transaksi->subtotal, 0, ',', '.') }}</p>
+    <p class="total">Diskon: Rp {{ number_format($transaksi->discount, 0, ',', '.') }}</p>
+    <p class="total">Total Akhir: Rp {{ number_format($transaksi->total_akhir, 0, ',', '.') }}</p>
+    <p class="total">Bayar: Rp {{ number_format($transaksi->bayar, 0, ',', '.') }}</p>
+    <p class="total">Kembalian: Rp {{ number_format($transaksi->kembalian, 0, ',', '.') }}</p>
 
-        <p>Terima kasih telah berbelanja!</p>
-    </div>
+    <p style="text-align: center; margin-top: 20px;">Terima kasih telah berbelanja!</p>
+</div>
+
 </body>
 </html>

@@ -46,4 +46,4 @@ Route::post('/tambahvoucher', [Controller::class, 'tambahvoucher'])->name('tamba
 Route::post('/editvoucher', [Controller::class, 'editvoucher'])->name('editvoucher');
 Route::post('/hapusvoucher/{id}', [Controller::class, 'hapusvoucher'])->name('hapusvoucher');
 Route::post('/prosesTransaksi', [Controller::class, 'prosesTransaksi'])->name('prosesTransaksi');
-Route::get('/cetakNota/{kode_transaksi}', [Controller::class, 'cetakNota'])->name('cetakNota');
+Route::get('/nota/{kode_transaksi}', [Controller::class, 'generateNota'])->name('nota');
