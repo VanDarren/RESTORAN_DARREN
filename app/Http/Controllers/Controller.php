@@ -534,29 +534,32 @@ public function editsetting(Request $request)
 
 public function prosesTransaksi(Request $request)
 {
-    $model = new resto();  
+    $model = new resto(); 
+    $kodeTransaksi = 'TR-' . time(); 
 
-    // Generate kode transaksi di backend
-    $kodeTransaksi = 'TR-' . time(); // Contoh: TR-1707053456
-
-    // Mengambil data dari request
     $tanggal = $request->input('tanggal');
     $kodeMember = $request->input('kode_member');
     $kodeVoucher = $request->input('kode_voucher');
-    $menu = json_encode($request->input('menu'));  // Simpan menu dalam format JSON
+    $menu = $request->input('menu');
     $subtotal = $request->input('subtotal');
     $discount = $request->input('discount');
     $totalAkhir = $request->input('total_akhir');
     $bayar = $request->input('bayar');
     $kembalian = $request->input('kembalian');
 
-    // Menyusun data transaksi
+    $qtyString = $request->input('qty');
+    $qtyArray = explode(',', $qtyString); 
+
+    // Menyusun qty berdasarkan menu
+    $qty = implode(',', $qtyArray);
+
     $data = [
         'tanggal' => $tanggal,
         'kode_transaksi' => $kodeTransaksi,
         'kode_member' => $kodeMember,
         'kode_voucher' => $kodeVoucher,
         'menu' => $menu, 
+        'qty' => $qty, 
         'total' => $subtotal,
         'discount' => $discount,
         'total_akhir' => $totalAkhir,
@@ -564,15 +567,14 @@ public function prosesTransaksi(Request $request)
         'kembalian' => $kembalian,
     ];
 
-    // Simpan data transaksi ke database
     $model->tambah('transaksi', $data);
 
-    // Kembalikan response JSON agar frontend bisa memproses lebih lanjut
     return response()->json([
         'success' => true,
         'kode_transaksi' => $kodeTransaksi
     ]);
 }
+
 
 
 public function transaksi()
@@ -594,21 +596,25 @@ public function transaksi()
 
 public function cetakNota($kode_transaksi)
 {
-    // Ambil data transaksi dari tabel 'transaksi' berdasarkan kode_transaksi
-    $transaksi = resto::where('kode_transaksi', $kode_transaksi)->first();
+    $model = new resto();
+    $transaksi = $model->getWhere('transaksi', ['kode_transaksi' => $kode_transaksi]);
 
     if (!$transaksi) {
         abort(404, "Transaksi tidak ditemukan.");
     }
 
-    // Decode menu jika disimpan dalam format JSON
-    $menuList = json_decode($transaksi->menu, true);
+    // Decode 'menu' if stored as JSON
+    $transaksi->menu = json_decode($transaksi->menu);
 
-    // Generate PDF
-    $pdf = Pdf::loadView('nota', compact('transaksi', 'menuList'));
+    // Check if menu is null or empty
+    if (!$transaksi->menu) {
+        $transaksi->menu = [];
+    }
 
-    return $pdf->stream('Nota_Transaksi_' . $kode_transaksi . '.pdf');
+    // Pass 'transaksi' to the view
+    return view('nota', compact('transaksi'));
 }
+
 
 
 }

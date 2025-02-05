@@ -12,22 +12,31 @@
 <body>
     <div class="container">
         <h3>Nota Transaksi</h3>
-        <p>Kode: {{ $transaksi->kode_transaksi }}</p>
+        <p>Kode Transaksi: {{ $transaksi->kode_transaksi }}</p>
         <p>Tanggal: {{ $transaksi->tanggal }}</p>
+        <p>Kode Member: {{ $transaksi->kode_member ?? 'Tidak ada' }}</p>
+        <p>Kode Voucher: {{ $transaksi->kode_voucher ?? 'Tidak ada' }}</p>
 
         <table>
             <thead>
                 <tr>
                     <th>Menu</th>
                     <th>Qty</th>
+                    <th>Total</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($menuList as $item)
-                <tr>
-                  
-                </tr>
-                @endforeach
+                @forelse ($transaksi->menu as $menuItem)
+                    <tr>
+                        <td>{{ $menuItem->nama_menu }}</td>
+                        <td>{{ $menuItem->qty }}</td>
+                        <td>Rp {{ number_format($menuItem->price * $menuItem->qty, 0, ',', '.') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="3">Tidak ada menu yang dipilih.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
 

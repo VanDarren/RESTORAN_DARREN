@@ -91,6 +91,7 @@
           <input type="hidden" name="kode_member" id="kodeMember">
           <input type="hidden" name="kode_voucher" id="kodeVoucher">
           <input type="hidden" name="menu" id="menu">
+          <input type="hidden" name="qty" id="qtyField">  <!-- Input untuk qty -->
           <input type="hidden" name="subtotal" id="subtotalField">
           <input type="hidden" name="discount" id="discountField">
           <input type="hidden" name="total_akhir" id="totalField">
@@ -149,27 +150,37 @@
     updateCart();
   });
 
-  // Update daftar pesanan
   function updateCart() {
     let cartBody = $('#cartBody');
     cartBody.empty();
     subtotal = 0;
+    let menuData = [];  // Array untuk menyimpan menu dan qty
+    let qtyArray = [];  // Array untuk qty
 
     cart.forEach((item, index) => {
-      subtotal += item.total;
-      cartBody.append(`
-        <tr>
-          <td>${item.name}</td>
-          <td>Rp ${item.price.toLocaleString()}</td>
-          <td>${item.qty}</td>
-          <td>Rp ${item.total.toLocaleString()}</td>
-          <td><button class="btn btn-danger btn-sm remove-item" data-index="${index}">X</button></td>
-        </tr>
-      `);
+        subtotal += item.total;
+        cartBody.append(`
+            <tr>
+                <td>${item.name}</td>
+                <td>Rp ${item.price.toLocaleString()}</td>
+                <td>${item.qty}</td>
+                <td>Rp ${item.total.toLocaleString()}</td>
+                <td><button class="btn btn-danger btn-sm remove-item" data-index="${index}">X</button></td>
+            </tr>
+        `);
+
+        // Simpan item menu dan qty dalam array
+        menuData.push({ id: item.id, name: item.name, qty: item.qty, price: item.price });
+        qtyArray.push(item.qty);  // Simpan qty dalam array
     });
 
     applyDiscount();
-  }
+
+    // Update hidden input field untuk menu dan qty
+    $('#menu').val(JSON.stringify(menuData)); // Pastikan menu dalam format JSON
+    $('#qtyField').val(qtyArray.join(','));  // Set qty ke hidden input dengan implode
+    $('#subtotalField').val(subtotal);  // Set subtotal ke hidden input
+}
 
   // Hapus item dari daftar pesanan
   $(document).on('click', '.remove-item', function() {
@@ -276,28 +287,25 @@
     };
 
     $.ajax({
-        url: "{{ url('/prosesTransaksi') }}", // Pastikan route benar
-        type: "POST",
-        data: formData,
-        success: function(response) {
-            if (response.success) {
-                let kodeTransaksi = response.kode_transaksi; // Ambil kode transaksi dari response
-                alert("Transaksi berhasil!");
-
-                // Cetak nota otomatis
-                window.open("{{ url('/cetakNota') }}/" + kodeTransaksi, "_blank");
-
-                // Refresh halaman setelah transaksi selesai
-                location.reload();
-            } else {
-                alert("Terjadi kesalahan saat menyimpan transaksi.");
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error(xhr.responseText);
-            alert("Gagal memproses transaksi.");
+    url: "{{ url('/prosesTransaksi') }}", // Pastikan route benar
+    type: "POST",
+    data: formData,
+    success: function(response) {
+        console.log(response);  // Debug response dari backend
+        if (response.success) {
+            let kodeTransaksi = response.kode_transaksi;
+            alert("Transaksi berhasil!");
+            window.open("{{ url('/cetakNota') }}/" + kodeTransaksi, "_blank");
+            location.reload();
+        } else {
+            alert("Terjadi kesalahan saat menyimpan transaksi.");
         }
-    });
+    },
+    error: function(xhr, status, error) {
+        console.error(xhr.responseText);
+        alert("Gagal memproses transaksi.");
+    }
+});
 });
 
 </script>
